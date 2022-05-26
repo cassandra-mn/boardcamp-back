@@ -11,6 +11,17 @@ export async function getCategories(req, res) {
 }
 
 export async function postCategories(req, res) {
+    const {name} = req.body;
+    if (name.length === 0) return res.sendStatus(400);
+    
+    try {
+        const exist = await connection.query(`SELECT * FROM categories WHERE name = '${name}'`);
+        if (exist.rows.length > 0) return res.sendStatus(409);
 
-    res.send(200);
+        await connection.query(`INSERT INTO categories (name) VALUES ('${name}')`);
+        res.sendStatus(201);
+    } catch(e) {
+        console.log(e);
+        res.sendStatus(500);
+    }
 }
