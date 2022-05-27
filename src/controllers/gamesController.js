@@ -1,8 +1,14 @@
 import connection from '../db.js';
 
 export async function getGames(req, res) {
-
-    res.sendStatus(200);
+    try {
+        const games = await connection.query('SELECT games.*, categories.name as "categoryName" FROM games JOIN categories ON games."categoryId" = categories.id');
+        console.log(games.rows);
+        res.sendStatus(200);
+    } catch(e) {
+        console.log(e);
+        res.sendStatus(500);
+    }
 }
 
 export async function postGames(req, res) {
