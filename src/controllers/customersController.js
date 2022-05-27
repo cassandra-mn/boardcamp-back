@@ -2,8 +2,8 @@ import connection from "../db.js";
 
 export async function getCustomers(req, res) {
     try {
-
-        res.sendStatus(501);
+        const customers = await connection.query('SELECT * FROM customers');
+        res.send(customers.rows);
     } catch(e) {
         console.log(e);
         res.sendStatus(500);
