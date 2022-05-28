@@ -2,7 +2,33 @@ import connection from '../db.js';
 import dayjs from 'dayjs';
 
 export async function getRentals(req, res) {
+    const {customerId, gameId} = req.query;
+
     try {
+        if (customerId) {
+            const rental = await connection.query(`
+                SELECT rentals.*, customers.name as "customerName", 
+                games.name as "gameName", categories.name as "categoryName"
+                FROM rentals JOIN games ON rentals."gameId" = games.id
+                JOIN customers ON rentals."customerId" = customers.id
+                JOIN categories ON games."categoryId" = categories.id
+                WHERE customers.id = ${customerId}
+            `);
+            return res.send(rental.rows);
+        }
+
+        if (gameId) {
+            const rental = await connection.query(`
+                SELECT rentals.*, customers.name as "customerName", 
+                games.name as "gameName", categories.name as "categoryName"
+                FROM rentals JOIN games ON rentals."gameId" = games.id
+                JOIN customers ON rentals."customerId" = customers.id
+                JOIN categories ON games."categoryId" = categories.id
+                WHERE games.id = ${gameId}
+            `);
+            return res.send(rental.rows);
+        }
+
         const rental = await connection.query(`
             SELECT rentals.*, customers.name as "customerName", 
             games.name as "gameName", categories.name as "categoryName"
