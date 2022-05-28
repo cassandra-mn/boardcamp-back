@@ -3,11 +3,11 @@ import dayjs from 'dayjs';
 import connection from '../db.js';
 
 export async function getRentals(req, res) {
-    const {customerId, gameId} = req.query;
+    const {customerId, gameId, status} = req.query;
 
     try {
         if (customerId) {
-            const rental = await connection.query(`
+            const rentals = await connection.query(`
                 SELECT rentals.*, customers.name as "customerName", 
                 games.name as "gameName", categories.name as "categoryName"
                 FROM rentals JOIN games ON rentals."gameId" = games.id
@@ -15,11 +15,11 @@ export async function getRentals(req, res) {
                 JOIN categories ON games."categoryId" = categories.id
                 WHERE customers.id = ${customerId}
             `);
-            return res.send(rental.rows);
+            return res.send(rentals.rows);
         }
 
         if (gameId) {
-            const rental = await connection.query(`
+            const rentals = await connection.query(`
                 SELECT rentals.*, customers.name as "customerName", 
                 games.name as "gameName", categories.name as "categoryName"
                 FROM rentals JOIN games ON rentals."gameId" = games.id
@@ -27,17 +27,29 @@ export async function getRentals(req, res) {
                 JOIN categories ON games."categoryId" = categories.id
                 WHERE games.id = ${gameId}
             `);
-            return res.send(rental.rows);
+            return res.send(rentals.rows);
         }
 
-        const rental = await connection.query(`
+        if (status) {
+            const rentals = await connection.query(`
+                SELECT rentals.*, customers.name as "customerName", 
+                games.name as "gameName", categories.name as "categoryName"
+                FROM rentals JOIN games ON rentals."gameId" = games.id
+                JOIN customers ON rentals."customerId" = customers.id
+                JOIN categories ON games."categoryId" = categories.id   
+                WHERE "returnDate" ${status === 'open' ? 'IS' : 'IS NOT'} null
+            `);
+            return res.send(rentals.rows);
+        }
+
+        const rentals = await connection.query(`
             SELECT rentals.*, customers.name as "customerName", 
             games.name as "gameName", categories.name as "categoryName"
             FROM rentals JOIN games ON rentals."gameId" = games.id
             JOIN customers ON rentals."customerId" = customers.id
-            JOIN categories ON games."categoryId" = categories.id;
+            JOIN categories ON games."categoryId" = categories.id
         `);
-        res.send(rental.rows);
+        res.send(rentals.rows);
     } catch(e) {
         console.log(e);
         res.sendStatus(500);
