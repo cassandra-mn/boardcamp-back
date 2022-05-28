@@ -3,8 +3,14 @@ import dayjs from 'dayjs';
 
 export async function getRentals(req, res) {
     try {
-
-        res.sendStatus(501);
+        const rental = await connection.query(`
+            SELECT rentals.*, customers.name as "customerName", 
+            games.name as "gameName", categories.name as "categoryName"
+            FROM rentals JOIN games ON rentals."gameId" = games.id
+            JOIN customers ON rentals."customerId" = customers.id
+            JOIN categories ON games."categoryId" = categories.id;
+        `);
+        res.send(rental.rows);
     } catch(e) {
         console.log(e);
         res.sendStatus(500);
@@ -24,7 +30,7 @@ export async function postRentals(req, res) {
         if (!game.rows[0]) return res.sendStatus(400);
         
         const rentals = await connection.query('SELECT * FROM rentals');
-        if (game.rows[0].stockTotal < rentals.rows.length) return res.sendStatus(400);
+        if (game.rows[0].stockTotal <= rentals.rows.length) return res.sendStatus(400);
         
         const originalPrice = daysRented * game.rows[0].pricePerDay;
         const rentDate = dayjs(Date.now()).format('YYYY-MM-DD');
