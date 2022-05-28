@@ -71,9 +71,30 @@ export async function postRentals(req, res) {
 }
 
 export async function postRentalsId(req, res) {
+    const {id} = req.params;
+
     try {
+        const rental = await connection.query(`SELECT * FROM rentals WHERE id = ${id}`);
+        if (rental.rows.length === 0) return res.sendStatus(404);
+
+        const finished = await connection.query(`SELECT * FROM rentals WHERE id = ${id}`);
+        if (finished.rows[0].returnDate) return res.sendStatus(400);
+
+        const returnDate = dayjs(Date.now()).format('YYYY-MM-DD');
+        await connection.query(`UPDATE rentals SET "returnDate" = $1 WHERE id = $2`, [returnDate, id]);
         
-        res.sendStatus(501);
+        const delay = await connection.query(`SELECT * FROM rentals WHERE id = ${id} AND "returnDate" - "rentDate" > "daysRented"`);
+        if (delay.rows.length > 0) {
+            const pricePerDay = delay.rows[0].originalPrice / delay.rows[0].daysRented;
+            const delayDays = (delay.rows[0].returnDate - delay.rows[0].rentDate) / 86400000;
+            const delayFee = pricePerDay * delayDays;
+        
+            await connection.query(`UPDATE rentals SET "delayFee" = $1 WHERE id = $2`, [delayFee, id]);
+            return res.sendStatus(200);
+        }
+        
+        await connection.query(`UPDATE rentals SET "delayFee" = 0 WHERE id = ${id}`);
+        res.sendStatus(200);
     } catch(e) {
         console.log(e);
         res.sendStatus(500);
@@ -84,11 +105,11 @@ export async function deleteRentals(req, res) {
     const {id} = req.params;
 
     try {
-        const exist = await connection.query(`SELECT * FROM rentals WHERE id = ${id}`);
-        if (exist.rows.length === 0) return res.sendStatus(404);
+        const rental = await connection.query(`SELECT * FROM rentals WHERE id = ${id}`);
+        if (rental.rows.length === 0) return res.sendStatus(404);
 
-        const del = await connection.query(`SELECT * FROM rentals WHERE id = ${id}`);
-        if (del.rows[0].returnDate) return res.sendStatus(400);
+        const finished = await connection.query(`SELECT * FROM rentals WHERE id = ${id}`);
+        if (finished.rows[0].returnDate) return res.sendStatus(400);
 
         await connection.query(`DELETE FROM rentals WHERE id = ${id}`);
         res.sendStatus(200);
