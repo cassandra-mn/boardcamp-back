@@ -1,7 +1,7 @@
 import connection from '../db.js';
 
 export async function getGames(req, res) {
-    const {name, order, desc} = req.query;
+    const {name, order, desc, offset} = req.query;
 
     try {
         if (name) {
@@ -11,6 +11,11 @@ export async function getGames(req, res) {
 
         if (order) {
             const games = await connection.query(`SELECT games.*, categories.name as "categoryName" FROM games JOIN categories ON games."categoryId" = categories.id ORDER BY "${order}" ${desc ? 'DESC' : ''}`);
+            return res.send(games.rows);
+        }
+
+        if (offset) {
+            const games = await connection.query(`SELECT games.*, categories.name as "categoryName" FROM games JOIN categories ON games."categoryId" = categories.id OFFSET ${offset}`);
             return res.send(games.rows);
         }
 

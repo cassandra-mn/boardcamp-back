@@ -1,7 +1,7 @@
 import connection from '../db.js';
 
 export async function getCustomers(req, res) {
-    const {cpf, order, desc} = req.query;
+    const {cpf, order, desc, offset} = req.query;
 
     try {
         if (cpf) {
@@ -11,6 +11,11 @@ export async function getCustomers(req, res) {
 
         if (order) {
             const customers = await connection.query(`SELECT * FROM customers ORDER BY ${order} ${desc ? 'DESC' : ''}`);
+            return res.send(customers.rows);
+        }
+
+        if (offset) {
+            const customers = await connection.query(`SELECT * FROM customers OFFSET ${offset}`);
             return res.send(customers.rows);
         }
 

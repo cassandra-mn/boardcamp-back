@@ -1,11 +1,16 @@
 import connection from '../db.js';
 
 export async function getCategories(req, res) {
-    const {order, desc} = req.query;
+    const {order, desc, offset} = req.query;
 
     try {
         if (order) {
             const categories = await connection.query(`SELECT * FROM categories ORDER BY ${order} ${desc ? 'DESC' : ''}`);
+            return res.send(categories.rows);
+        }
+
+        if (offset) {
+            const categories = await connection.query(`SELECT * FROM categories OFFSET ${offset}`);
             return res.send(categories.rows);
         }
 
