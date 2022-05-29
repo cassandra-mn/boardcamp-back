@@ -1,13 +1,19 @@
 import connection from '../db.js';
 
 export async function getCustomers(req, res) {
-    const {cpf} = req.query;
+    const {cpf, order, desc} = req.query;
 
     try {
         if (cpf) {
             const customers = await connection.query(`SELECT * FROM customers WHERE cpf LIKE '${cpf}%'`);
             return res.send(customers.rows);
         }
+
+        if (order) {
+            const customers = await connection.query(`SELECT * FROM customers ORDER BY ${order} ${desc ? 'DESC' : ''}`);
+            return res.send(customers.rows);
+        }
+
         const customers = await connection.query('SELECT * FROM customers');
         res.send(customers.rows);
     } catch(e) {

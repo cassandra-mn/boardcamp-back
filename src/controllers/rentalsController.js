@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import connection from '../db.js';
 
 export async function getRentals(req, res) {
-    const {customerId, gameId, status, startDate} = req.query;
+    const {customerId, gameId, status, startDate, order, desc} = req.query;
 
     try {
         if (customerId) {
@@ -50,6 +50,18 @@ export async function getRentals(req, res) {
                 JOIN customers ON rentals."customerId" = customers.id
                 JOIN categories ON games."categoryId" = categories.id   
                 WHERE "rentDate" >= '${startDate}'
+            `);
+            return res.send(rentals.rows);
+        }
+
+        if (order) {
+            const rentals = await connection.query(`
+                SELECT rentals.*, customers.name as "customerName", 
+                games.name as "gameName", categories.name as "categoryName"
+                FROM rentals JOIN games ON rentals."gameId" = games.id
+                JOIN customers ON rentals."customerId" = customers.id
+                JOIN categories ON games."categoryId" = categories.id
+                ORDER BY "${order}" ${desc ? 'DESC' : ''}
             `);
             return res.send(rentals.rows);
         }
