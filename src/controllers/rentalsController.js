@@ -3,7 +3,7 @@ import dayjs from 'dayjs';
 import connection from '../db.js';
 
 export async function getRentals(req, res) {
-    const {customerId, gameId, status, startDate, order, desc, offset} = req.query;
+    const {customerId, gameId, status, startDate, order, desc, offset, limit} = req.query;
 
     try {
         if (customerId) {
@@ -66,14 +66,15 @@ export async function getRentals(req, res) {
             return res.send(rentals.rows);
         }
 
-        if (offset) {
+        if (offset || limit) {
             const rentals = await connection.query(`
                 SELECT rentals.*, customers.name as "customerName", 
                 games.name as "gameName", categories.name as "categoryName"
                 FROM rentals JOIN games ON rentals."gameId" = games.id
                 JOIN customers ON rentals."customerId" = customers.id
                 JOIN categories ON games."categoryId" = categories.id
-                OFFSET ${offset}
+                ${offset ? `OFFSET ${offset}` : ''}
+                ${limit ? `LIMIT ${limit}` : ''}
             `);
             return res.send(rentals.rows);
         }

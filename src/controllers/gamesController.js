@@ -1,21 +1,34 @@
 import connection from '../db.js';
 
 export async function getGames(req, res) {
-    const {name, order, desc, offset} = req.query;
+    const {name, order, desc, offset, limit} = req.query;
 
     try {
         if (name) {
-            const games = await connection.query(`SELECT games.*, categories.name as "categoryName" FROM games JOIN categories ON games."categoryId" = categories.id WHERE lower(games.name) LIKE lower('${name}%')`);
+            const games = await connection.query(`
+                SELECT games.*, categories.name as "categoryName" 
+                FROM games JOIN categories ON games."categoryId" = categories.id 
+                WHERE lower(games.name) LIKE lower('${name}%')
+            `);
             return res.send(games.rows);
         } 
 
         if (order) {
-            const games = await connection.query(`SELECT games.*, categories.name as "categoryName" FROM games JOIN categories ON games."categoryId" = categories.id ORDER BY "${order}" ${desc ? 'DESC' : ''}`);
+            const games = await connection.query(`
+                SELECT games.*, categories.name as "categoryName" 
+                FROM games JOIN categories ON games."categoryId" = categories.id 
+                ORDER BY "${order}" ${desc ? 'DESC' : ''}
+            `);
             return res.send(games.rows);
         }
 
-        if (offset) {
-            const games = await connection.query(`SELECT games.*, categories.name as "categoryName" FROM games JOIN categories ON games."categoryId" = categories.id OFFSET ${offset}`);
+        if (offset || limit) {
+            const games = await connection.query(`
+                SELECT games.*, categories.name as "categoryName" 
+                FROM games JOIN categories ON games."categoryId" = categories.id 
+                ${offset ? `OFFSET ${offset}` : ''}
+                ${limit ? `LIMIT ${limit}` : ''}
+            `);
             return res.send(games.rows);
         }
 
@@ -40,7 +53,7 @@ export async function postGames(req, res) {
         const exist = await connection.query('SELECT * FROM games WHERE name = $1', [name]);
         if (exist.rows.length > 0) return res.sendStatus(409);
 
-        await connection.query(`INSERT INTO games (name, image, "stockTotal", "categoryId", "pricePerDay") VALUES ($1, $2, $3, $4, $5)`, [name, image, stockTotal, categoryId, pricePerDay]);
+        await connection.query('INSERT INTO games (name, image, "stockTotal", "categoryId", "pricePerDay") VALUES ($1, $2, $3, $4, $5)', [name, image, stockTotal, categoryId, pricePerDay]);
         res.sendStatus(201);
     } catch(e) {
         console.log(e);
