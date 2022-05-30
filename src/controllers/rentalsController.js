@@ -93,6 +93,21 @@ export async function getRentals(req, res) {
     }
 }
 
+export async function getMetrics(req, res) {
+    try {
+        const rentals = await connection.query(`
+            SELECT (SUM("originalPrice") + SUM("delayFee")) as revenue,
+            COUNT("daysRented") as rentals,
+            ((SUM("originalPrice") + SUM("delayFee")) / COUNT("daysRented")) as average
+            FROM rentals;
+        `);
+        res.send(rentals.rows);
+    } catch(e) {
+        console.log(e);
+        res.sendStatus(500);
+    }
+}
+
 export async function postRentals(req, res) {
     const {customerId, gameId, daysRented} = req.body;
     
