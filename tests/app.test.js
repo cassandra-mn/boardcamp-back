@@ -5,6 +5,7 @@ import app from '../src/app.js';
 beforeEach(async () => {
     await connection.query('TRUNCATE TABLE categories');
     await connection.query('TRUNCATE TABLE games');
+    await connection.query('TRUNCATE TABLE customers');
 });
 
 describe('tests categories route', () => {
@@ -74,6 +75,42 @@ describe('tests games route', () => {
             pricePerDay: 0
         }
         const result = await supertest(app).post('/games').send(body); 
+        expect(result.status).toEqual(400);
+    });
+});
+
+describe('tests customers route', () => {
+    it('returns customers', async() => {
+        const result = await supertest(app).get('/customers');
+        expect(result).not.toBeNull();
+    });
+
+    it('returns 201 for valid parameters', async () => { 
+        const body = {
+            name: 'teste', 
+            phone: '78912345678', 
+            cpf: '12345678912', 
+            birthday: '2000-12-12'
+        };
+        const result = await supertest(app).post('/customers').send(body); 
+        expect(result.status).toEqual(201);
+    });
+
+    it('returns 409 for duplicate parameters', async () => {
+        const body = {
+            name: 'teste', 
+            phone: '78912345678', 
+            cpf: '12345678912', 
+            birthday: '2000-12-12'
+        };
+        await supertest(app).post('/customers').send(body); 
+        const result = await supertest(app).post('/customers').send(body); 
+        expect(result.status).toEqual(409);
+    });
+
+    it('returns 422 for invalid parameters', async () => { 
+        const body = {name: '', phone: '', cpf: '', birthday: ''};
+        const result = await supertest(app).post('/customers').send(body); 
         expect(result.status).toEqual(400);
     });
 });
